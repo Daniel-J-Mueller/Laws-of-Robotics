@@ -1,0 +1,42 @@
+{
+  "object": "fine_tuning.job",
+  "id": "ftjob-TOE2KaM7WvHA05Mb6EBgPP7s",
+  "model": "gpt-4.1-2025-04-14",
+  "created_at": 1780360516,
+  "finished_at": null,
+  "fine_tuned_model": null,
+  "organization_id": "org-MAhHGhZE2sOKJTArcXeP68hW",
+  "result_files": [],
+  "status": "cancelled",
+  "validation_file": null,
+  "training_file": "file-AXb5GYvWAbbEkjg1fkbu9z",
+  "hyperparameters": {
+    "n_epochs": 3,
+    "batch_size": 1,
+    "learning_rate_multiplier": 2
+  },
+  "trained_tokens": null,
+  "error": {},
+  "user_provided_suffix": "laws-of-robotics",
+  "seed": 52561462,
+  "estimated_finish": null,
+  "integrations": [],
+  "metadata": null,
+  "usage_metrics": null,
+  "shared_with_openai": false,
+  "eval_id": null,
+  "internal_worker_backend": null,
+  "internal_peashooter_execution": null,
+  "train_experiment_id": null,
+  "eval_experiment_id": null,
+  "method": {
+    "type": "supervised",
+    "supervised": {
+      "hyperparameters": {
+        "n_epochs": 3,
+        "batch_size": 1,
+        "learning_rate_multiplier": 2.0
+      }
+    }
+  }
+}

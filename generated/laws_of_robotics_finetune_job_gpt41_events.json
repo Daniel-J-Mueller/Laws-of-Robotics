@@ -1,0 +1,24 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "object": "fine_tuning.job.event",
+      "id": "ftevent-DXVUU2cv0IqGpKEHMS3ay0sp",
+      "created_at": 1780360516,
+      "level": "info",
+      "message": "Validating training file: file-AXb5GYvWAbbEkjg1fkbu9z",
+      "data": {},
+      "type": "message"
+    },
+    {
+      "object": "fine_tuning.job.event",
+      "id": "ftevent-TViCOTudE9ws2ZrkX2UeKWCv",
+      "created_at": 1780360516,
+      "level": "info",
+      "message": "Created fine-tuning job: ftjob-TOE2KaM7WvHA05Mb6EBgPP7s",
+      "data": {},
+      "type": "message"
+    }
+  ],
+  "has_more": false
+}

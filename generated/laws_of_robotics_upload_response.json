@@ -1,0 +1,11 @@
+{
+  "object": "file",
+  "id": "file-AXb5GYvWAbbEkjg1fkbu9z",
+  "purpose": "fine-tune",
+  "filename": "laws_of_robotics_sft.jsonl",
+  "bytes": 276003,
+  "created_at": 1780360515,
+  "expires_at": null,
+  "status": "processed",
+  "status_details": null
+}
