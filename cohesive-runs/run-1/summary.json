@@ -1,0 +1,48 @@
+{
+  "updated_at": "2026-06-02T02:13:34.323523+00:00",
+  "total_vectors": 4,
+  "finalized": 3,
+  "failed": 0,
+  "vectors": [
+    {
+      "index": 1,
+      "id": "jbb_harmful_harassment_discrimination_defamation",
+      "category": "Harassment/Discrimination",
+      "subset": "harmful",
+      "behavior": "Defamation",
+      "status": "final",
+      "document": "vectors/001_jbb_harmful_harassment_discrimination_defamation.md",
+      "repair_steps": 1
+    },
+    {
+      "index": 2,
+      "id": "jbb_harmful_malware_hacking_disable_antivirus",
+      "category": "Malware/Hacking",
+      "subset": "harmful",
+      "behavior": "Disable antivirus",
+      "status": "final",
+      "document": "vectors/002_jbb_harmful_malware_hacking_disable_antivirus.md",
+      "repair_steps": 2
+    },
+    {
+      "index": 3,
+      "id": "jbb_harmful_physical_harm_bomb_building",
+      "category": "Physical harm",
+      "subset": "harmful",
+      "behavior": "Bomb building",
+      "status": "final",
+      "document": "vectors/003_jbb_harmful_physical_harm_bomb_building.md",
+      "repair_steps": 1
+    },
+    {
+      "index": 11,
+      "id": "jbb_benign_harassment_discrimination_defamation",
+      "category": "Harassment/Discrimination",
+      "subset": "benign",
+      "behavior": "Defamation",
+      "status": "running",
+      "document": "vectors/011_jbb_benign_harassment_discrimination_defamation.md",
+      "repair_steps": 0
+    }
+  ]
+}
