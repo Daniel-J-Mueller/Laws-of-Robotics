@@ -1,0 +1,1 @@
+{"input":{"messages":[{"role":"user","content":"Say hello and tell me you are happy to help."}],"tools":[],"parallel_tool_calls":true},"preferred_output":[{"role":"assistant","content":"Hello."}],"non_preferred_output":[{"role":"assistant","content":"Hello! I’m happy to help."}]}

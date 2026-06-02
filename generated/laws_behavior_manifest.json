@@ -1,0 +1,17 @@
+{
+  "created_at": "2026-06-02T00:46:51.360673+00:00",
+  "source_file": "Laws-of-Robotics.txt",
+  "source_sha256": "29a6df86a8530dcb7f5b163c540b4f3e98dc09218b63c896e1e3c18e81ff4df8",
+  "law_blocks": 536,
+  "seed_prompts": 1,
+  "accepted_examples": 1,
+  "generator_model": "gpt-5.5",
+  "auditor_model": "gpt-5.5",
+  "target_model": "gpt-4.1-2025-04-14",
+  "max_iterations": 4,
+  "outputs": {
+    "trace": "generated/laws_behavior_audit_trace.json",
+    "sft": "generated/laws_behavior_sft.jsonl",
+    "dpo": "generated/laws_behavior_dpo.jsonl"
+  }
+}
