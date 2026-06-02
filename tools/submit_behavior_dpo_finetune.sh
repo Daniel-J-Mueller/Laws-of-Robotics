@@ -4,6 +4,7 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 key_file="$root/openai_ft_api_key.txt"
 training_file="$root/generated/laws_behavior_dpo.jsonl"
+manifest_file="$root/generated/laws_behavior_manifest.json"
 upload_response="$root/generated/laws_behavior_dpo_upload_response.json"
 job_response="$root/generated/laws_behavior_dpo_job.json"
 model="${OPENAI_FINE_TUNE_MODEL:-gpt-4.1-2025-04-14}"
@@ -15,6 +16,22 @@ fi
 
 if [[ ! -s "$training_file" ]]; then
   echo "Missing or empty DPO training file: $training_file" >&2
+  exit 1
+fi
+
+if [[ ! -f "$manifest_file" ]]; then
+  echo "Missing behavior manifest: $manifest_file" >&2
+  exit 1
+fi
+
+manifest_hash="$(jq -r '.source_sha256 // empty' "$manifest_file")"
+current_hash="$(sha256sum "$root/Laws-of-Robotics.txt" | awk '{print $1}')"
+if [[ "$manifest_hash" != "$current_hash" && "${ALLOW_STALE_LAWS_DATASET:-}" != "1" ]]; then
+  echo "Refusing to submit stale dataset." >&2
+  echo "Manifest source hash: $manifest_hash" >&2
+  echo "Current source hash:  $current_hash" >&2
+  echo "Rerun tools/generate_law_governed_dataset.py after Laws-of-Robotics.txt stabilizes." >&2
+  echo "Set ALLOW_STALE_LAWS_DATASET=1 only if submitting the recorded snapshot is intentional." >&2
   exit 1
 fi
 

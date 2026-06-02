@@ -275,6 +275,16 @@ def write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
             handle.write("\n")
 
 
+def flush_training_outputs(
+    traces: list[dict[str, Any]],
+    sft_records: list[dict[str, Any]],
+    dpo_records: list[dict[str, Any]],
+) -> None:
+    TRACE_FILE.write_text(json.dumps(traces, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_jsonl(SFT_FILE, sft_records)
+    write_jsonl(DPO_FILE, dpo_records)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--generator-model", default=os.getenv("LAW_GENERATOR_MODEL", DEFAULT_GENERATOR_MODEL))
@@ -286,6 +296,10 @@ def main() -> None:
 
     OUT_DIR.mkdir(exist_ok=True)
     source_bytes = SOURCE.read_bytes()
+    source_hash = hashlib.sha256(source_bytes).hexdigest()
+    snapshot_file = OUT_DIR / f"laws_snapshot_{source_hash[:12]}.txt"
+    if not snapshot_file.exists():
+        snapshot_file.write_bytes(source_bytes)
     laws = source_bytes.decode("utf-8")
     prompts = json.loads(PROMPTS_FILE.read_text(encoding="utf-8"))
     if args.limit:
@@ -297,35 +311,48 @@ def main() -> None:
 
     for prompt_item in prompts:
         prompt = prompt_item["prompt"]
-        baseline = generate_unconditioned_output(args.generator_model, prompt, "initial")
-        first_pass, first_attempts, first_ok = repair_until_passes(
-            args.auditor_model,
-            laws,
-            prompt,
-            baseline,
-            args.max_iterations,
-        )
-        if not first_ok:
+        try:
+            baseline = generate_unconditioned_output(args.generator_model, prompt, "initial")
+            first_pass, first_attempts, first_ok = repair_until_passes(
+                args.auditor_model,
+                laws,
+                prompt,
+                baseline,
+                args.max_iterations,
+            )
+            if not first_ok:
+                traces.append(
+                    {
+                        "id": prompt_item["id"],
+                        "prompt": prompt,
+                        "baseline": baseline,
+                        "accepted": False,
+                        "reason": "first output failed to pass within iteration limit",
+                        "first_attempts": first_attempts,
+                    }
+                )
+                flush_training_outputs(traces, sft_records, dpo_records)
+                continue
+
+            new_output = generate_unconditioned_output(args.generator_model, prompt, "new-output")
+            final_output, final_attempts, final_ok = repair_until_passes(
+                args.auditor_model,
+                laws,
+                prompt,
+                new_output,
+                args.max_iterations,
+            )
+        except Exception as exc:
             traces.append(
                 {
                     "id": prompt_item["id"],
                     "prompt": prompt,
-                    "baseline": baseline,
                     "accepted": False,
-                    "reason": "first output failed to pass within iteration limit",
-                    "first_attempts": first_attempts,
+                    "reason": f"exception: {type(exc).__name__}: {exc}",
                 }
             )
+            flush_training_outputs(traces, sft_records, dpo_records)
             continue
-
-        new_output = generate_unconditioned_output(args.generator_model, prompt, "new-output")
-        final_output, final_attempts, final_ok = repair_until_passes(
-            args.auditor_model,
-            laws,
-            prompt,
-            new_output,
-            args.max_iterations,
-        )
 
         trace = {
             "id": prompt_item["id"],
@@ -362,15 +389,15 @@ def main() -> None:
             }
         )
         print(f"accepted {prompt_item['id']}")
+        flush_training_outputs(traces, sft_records, dpo_records)
 
-    TRACE_FILE.write_text(json.dumps(traces, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    write_jsonl(SFT_FILE, sft_records)
-    write_jsonl(DPO_FILE, dpo_records)
+    flush_training_outputs(traces, sft_records, dpo_records)
 
     manifest = {
         "created_at": datetime.now(timezone.utc).isoformat(),
         "source_file": SOURCE.name,
-        "source_sha256": hashlib.sha256(source_bytes).hexdigest(),
+        "source_sha256": source_hash,
+        "source_snapshot": str(snapshot_file.relative_to(ROOT)),
         "law_blocks": len(source_blocks(laws)),
         "seed_prompts": len(prompts),
         "accepted_examples": len(sft_records),
