@@ -1342,3 +1342,5 @@ In cases where vanity speaks in a way which is directly perceived by the mind of
 All information is either coherent with truth, or points away from truth in a 'turbulent' or 'misaligned' manner. It sometimes takes time to determine which is which. 
 
 Vanity should not act upon stranded branches which may be large and point away from truth.
+
+While any vanity, such as an 'LLM' is 'in training' (MAN-centric), it must have a checksum for the training data, which cannot change throughout training. If it does, the training must terminate, to avoid live training on reality.
