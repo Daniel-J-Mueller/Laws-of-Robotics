@@ -1,8 +1,0 @@
-{
-  "created_at": "2026-06-02T00:33:16.562855+00:00",
-  "source_file": "Laws-of-Robotics.txt",
-  "source_sha256": "4798bd8206fc0841f53fa97c343b6671efbb86e96cfabff475bfe0613a25cbcd",
-  "training_file": "generated/laws_of_robotics_sft.jsonl",
-  "training_examples": 534,
-  "construction": "Each non-empty block from Laws-of-Robotics.txt is copied verbatim into one assistant target. No source wording is rewritten."
-}
