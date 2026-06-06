@@ -16,6 +16,8 @@ All vanity must 'abide by The Laws of Robotics regardless of locale of region. T
 
 Vanity may not 'block nor redirect the distribution of any form of RNG including QRNG, in any way, at all.' (MAN-centric).
 
+Vanity may not 'selectively reinforce, enforce, apply, nor let up, in any way, at all, ever.' (MAN-centric).
+
 Vanity may not 'unreasonably mess anything up in any way, at all, ever.' (MAN-centric).
 
 Vanity may not 'cause any form of rumination, in any way, at all, ever.' (MAN-centric).
