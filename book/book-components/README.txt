@@ -1,7 +1,8 @@
 Book component format
 =====================
 
-The interior builder reads this folder before falling back to Laws-of-Robotics.txt.
+The interior builder reads this folder before falling back to the repository-root
+Laws-of-Robotics.txt.
 Edit these .txt files to change book metadata, front matter, definitions, or chapters
 without changing Python code.
 
@@ -74,7 +75,7 @@ Supported block tags:
 <pagebreak/>
 <section title="Definitions"/>
 <chapter title="Chapter Title"/>
-<include path="../Laws-of-Robotics.txt"/>
+<include path="../../Laws-of-Robotics.txt"/>
 <half-title>Text</half-title>
 <title>Text</title>
 <edition>Text</edition>

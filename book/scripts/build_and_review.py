@@ -8,7 +8,8 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 BOOK_DIR = SCRIPT_DIR.parent
-SOURCE = BOOK_DIR / "Laws-of-Robotics.txt"
+REPO_DIR = BOOK_DIR.parent
+SOURCE = REPO_DIR / "Laws-of-Robotics.txt"
 COMPONENTS = BOOK_DIR / "book-components"
 PDF = BOOK_DIR / "The_Laws_of_Robotics_of_Daniel_Joseph_Mueller_First_Edition_Interior.pdf"
 RENDER = BOOK_DIR / "review" / "review_render"

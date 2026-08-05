@@ -17,6 +17,7 @@ Use these files for ordinary book edits instead of changing Python:
 - `book-components/chapters/*.txt` - sorted chapter files. Each chapter gets its own heading.
 
 The existing laws source is included by reference from `book-components/chapters/01-the-laws.txt`.
+That include points to the repository-root `../Laws-of-Robotics.txt`, which is the single source of truth for the Laws. The book build should not use or create a separate `book/Laws-of-Robotics.txt` copy.
 To add a new chapter, add a file like `book-components/chapters/02-new-chapter.txt`:
 
 ```text
@@ -68,7 +69,7 @@ python scripts/review_pdf.py OUTPUT/The_Laws_of_Robotics_of_Daniel_Joseph_Muelle
 - `book-components/` - editable text components for metadata, front matter, definitions, and chapters.
 - `OUTPUT/` - finished assembler output PDFs.
 - `scripts/build_laws_interior.py` - typesets the interior.
-- `scripts/fetch_source.py` - downloads the current repository text.
+- `scripts/fetch_source.py` - downloads the current repository text to the repository-root source file.
 - `scripts/review_pdf.py` - runs preflight tools when available and renders every page to PNG.
 - `scripts/build_and_review.py` - completes the full fetch/build/review sequence.
 - `scripts/build_hardcover_cover.py` - creates the B&N printed-case hardcover wrap cover.

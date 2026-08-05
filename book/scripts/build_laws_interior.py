@@ -4,7 +4,7 @@
 Task initiated by Daniel Joseph Mueller.
 
 Usage:
-  python build_laws_interior.py --source Laws-of-Robotics.txt --output interior.pdf
+  python build_laws_interior.py --source ../Laws-of-Robotics.txt --output interior.pdf
 
 If --source is omitted or absent, the script downloads the current text from:
 https://raw.githubusercontent.com/Daniel-J-Mueller/Laws-of-Robotics/main/Laws-of-Robotics.txt
@@ -49,7 +49,9 @@ SOURCE_URL = (
 PAGE_W, PAGE_H = 7 * inch, 10 * inch
 SCRIPT_DIR = Path(__file__).resolve().parent
 BOOK_DIR = SCRIPT_DIR.parent
-DEFAULT_SOURCE = BOOK_DIR / "Laws-of-Robotics.txt"
+REPO_DIR = BOOK_DIR.parent
+DEFAULT_SOURCE = REPO_DIR / "Laws-of-Robotics.txt"
+DEPRECATED_BOOK_SOURCE = BOOK_DIR / "Laws-of-Robotics.txt"
 DEFAULT_COMPONENTS_DIR = BOOK_DIR / "book-components"
 
 FONT_DIRS = [
@@ -115,6 +117,7 @@ def register_fonts() -> None:
 
 
 def load_source(path: Path) -> str:
+    path = canonical_source(path)
     if path.exists():
         return path.read_text(encoding="utf-8-sig")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -124,6 +127,12 @@ def load_source(path: Path) -> str:
         data = response.read()
     path.write_bytes(data)
     return data.decode("utf-8-sig")
+
+
+def canonical_source(path: Path) -> Path:
+    if path.expanduser().resolve() == DEPRECATED_BOOK_SOURCE.resolve():
+        return DEFAULT_SOURCE
+    return path
 
 
 def remove_author_note_lines(text: str) -> str:
@@ -233,7 +242,7 @@ def expand_includes(text: str, components_dir: Path) -> str:
             attrs = parse_attrs(match.group(2))
             if "path" not in attrs:
                 raise ValueError("<include/> requires a path attribute.")
-            include_path = (components_dir / attrs["path"]).resolve()
+            include_path = canonical_source(components_dir / attrs["path"]).resolve()
             if not include_path.exists() and include_path.name == "Laws-of-Robotics.txt":
                 load_source(include_path)
             if not include_path.exists():
@@ -597,6 +606,7 @@ def build_component_story(components_dir: Path, source: Path) -> tuple[list, int
 
 
 def build_pdf(source: Path, output: Path, components: Path | None = DEFAULT_COMPONENTS_DIR) -> tuple[int, int]:
+    source = canonical_source(source)
     register_fonts()
     metadata = BookMetadata()
     if components is not None and components.exists():

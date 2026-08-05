@@ -6,9 +6,10 @@ import sys
 from pathlib import Path
 
 BOOK_DIR = Path(__file__).resolve().parent
+REPO_DIR = BOOK_DIR.parent
 SCRIPTS_DIR = BOOK_DIR / "scripts"
 OUTPUT_DIR = BOOK_DIR / "OUTPUT"
-SOURCE = BOOK_DIR / "Laws-of-Robotics.txt"
+SOURCE = REPO_DIR / "Laws-of-Robotics.txt"
 COMPONENTS = BOOK_DIR / "book-components"
 
 INTERIOR_PDF = OUTPUT_DIR / "The_Laws_of_Robotics_of_Daniel_Joseph_Mueller_First_Edition_Interior.pdf"
