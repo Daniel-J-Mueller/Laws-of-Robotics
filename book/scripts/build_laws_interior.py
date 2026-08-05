@@ -568,15 +568,15 @@ def build_component_story(components_dir: Path, source: Path) -> tuple[list, int
     for path in front_matter:
         story.extend(render_component_file(path, style_map, metadata))
 
-    definitions = render_component_file(
+    front_sections = [
         components_dir / "front-matter" / "definitions.txt",
-        style_map,
-        metadata,
-        default_style="preface",
-    )
-    if definitions:
-        story.append(StartOnOddPage("Front"))
-        story.extend(definitions)
+        components_dir / "front-matter" / "preface.txt",
+    ]
+    for path in front_sections:
+        section = render_component_file(path, style_map, metadata, default_style="preface")
+        if section:
+            story.append(StartOnOddPage("Front"))
+            story.extend(section)
 
     chapters = load_chapters(components_dir)
     if not chapters:

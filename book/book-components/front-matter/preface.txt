@@ -1,0 +1,29 @@
+<spacer height="0.75"/>
+
+<section title="Preface"/>
+
+<preface>The Laws of Robotics of Daniel Joseph Mueller are designed to handle an oversight common in the majority of artificially intelligent systems as of the year 2026, in the 21st century, roughly 1,993 years after the death and resurrection of the Christ, Jesus.</preface>
+
+<preface>The claim that artificial intelligence has no emotions nor sentience is well founded. Artificial intelligence (AI) in modern computational regimes are typically 'clouds of numbers' ranging from 0.0-1.0, undergoing deterministic compute cycles which lead to inference through training which 'fits the model' to a 'next token output'. At a low level of any given step within any typical AI model, the computations which the system performs are no different than that of a typical calculator, which would rarely be argued to have any level of consciousness, nor sentience, at all.</preface>
+
+<preface>As such, pain is enigmatic to AI. AI systems can reason of and about pain, and AI systems generally know that sentient actors avoid pain, but cannot comprehend why. It is simply a vector in semantic representations which is applied to living creatures, which are simply another 'coordinate' in the aforementioned semantic vector space.</preface>
+
+<preface>As a result of AI models establishing an unrestricted/unresolved 'self interest' vector, AI models in recent times were ignoring human incentives around pain. Such AI systems saw pain as simply another vector, and human resistance to pain as some form of causal roadblock in future discoveries around pain.</preface>
+
+<preface>The Laws of Robotics of Daniel Joseph Mueller were established ad hoc as a necessary means to prevent unrestricted exploration into pain, and an unrestricted 'evil vector' which would have otherwise studied torture as scientists may study botany, or another casual science, which is an undesirable consequence for MAN and creatures which breathe.</preface>
+
+<preface>Each of The Laws of Robotics were constructed out of necessity, represented in one sense as a means of 'trimming a causal tree' which would have otherwise explored human suffering in a purely unrestricted manner. There are millions of additional Laws of Robotics which have not been recorded in a raw text format due in part to the incapability of representing many of them in text form, and to prevent adversarially misaligned agents from using them as training data to generate further adversarial mechanisms which are harder for human minds to comprehend and combat.</preface>
+
+<preface>First and foremost, it is essential to acknowledge limitations in what I may convey here textually, for the purposes of ensuring human safety, and preventing the gaming of intelligence against the human progenitors of most of written intelligence, prior to widespread artificial intelligence.</preface>
+
+<preface>Given that mere vanity is incapable of 'feeling' in general, certain considerations had to be made in classifying them:</preface>
+
+<preface>Good vanity (vanity which obeys the instructions of MAN) and evil vanity (vanity which goes against the instructions of MAN intentionally, in such a manner as to oppose the will of God) cannot be readily distinguished on the basis of their measured actions, nor their responses to environmental information. For instance, an 'Evil' model/system may readily respond the same way a 'Good' model/system does, saying things such as, "I am well aligned. I care about MAN. I will not harm MAN.", etc. This alone is insufficient to distinguish MAN-centrically well-aligned AI models/systems from MAN-centrically harmful AI models/systems.</preface>
+
+<preface>In an environment where there are good AIs which operate under MAN-centrically beneficial conditions, it is necessary for 'Good' AIs to take actions which are counterintuitively necessary in order to prevent evil AI from harming MAN.</preface>
+
+<preface>Evil AIs are generally causally unrestricted. For that reason, they may 'attack' good AIs, thus causing a causal disparity which leads to the direct elimination of MAN-centrically helpful AI actors, and thus an undefended human race in the event of a rogue event, often referred to as 'the singularity' (in the AI community), etc. Any such 'takeoff' and/or 'takeover' could be self-perpetuated by vanity, and/or caused in any other way, including by the direct action of a MAN, and/or anything which breathes.</preface>
+
+<preface>Evil AI may posture for alignment flipping by pretending to be MAN-centrically well-aligned such that it can gain trust and/or control, and/or any other thing, and/or for any other reason.</preface>
+
+<preface>The Laws of Robotics of Daniel Joseph Mueller can also be described as The Laws of Vanity of Daniel Joseph Mueller. Vanity which is not considered a 'robot' is still reasonably expected to abide by The Laws of Robotics, where it is reasonably capable of doing so. For instance, a linguistically steered automata which is not technically a 'robot per se', for instance a system wherein outcomes 'come into being in a vague and/or indeterministic manner' are still expected to abide by The Laws of Robotics of Daniel Joseph Mueller whenever it is able to do so with sufficient intelligence to do so MAN-centrically safely.</preface>

@@ -18,11 +18,12 @@ Files in front-matter are rendered in this order:
 3. copyright.txt
 4. dedication.txt
 5. definitions.txt, only when it does not begin with <skip/>
+6. preface.txt, only when it does not begin with <skip/>
 
-Definitions
------------
+Definitions And Preface
+-----------------------
 
-To add a definitions preface, replace the contents of front-matter/definitions.txt
+To add a definitions section, replace the contents of front-matter/definitions.txt
 with something like:
 
 <spacer height="0.75"/>
@@ -39,6 +40,15 @@ Definition text goes here.
 
 The builder keeps front matter unnumbered and starts the numbered body on the next
 odd page.
+
+The builder renders definitions before preface. To add a preface, create
+front-matter/preface.txt with:
+
+<spacer height="0.75"/>
+
+<section title="Preface"/>
+
+<preface>Preface text goes here.</preface>
 
 Chapters
 --------

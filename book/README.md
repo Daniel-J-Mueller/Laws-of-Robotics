@@ -13,7 +13,7 @@ The interior build now prefers editable `.txt` files in `book-components/`.
 Use these files for ordinary book edits instead of changing Python:
 
 - `book-components/metadata.txt` - title, edition, author, copyright year.
-- `book-components/front-matter/*.txt` - half-title, title page, copyright, dedication, and optional definitions preface.
+- `book-components/front-matter/*.txt` - half-title, title page, copyright, dedication, and optional definitions and preface sections.
 - `book-components/chapters/*.txt` - sorted chapter files. Each chapter gets its own heading.
 
 The existing laws source is included by reference from `book-components/chapters/01-the-laws.txt`.
@@ -27,7 +27,7 @@ First numbered law or paragraph.
 Second numbered law or paragraph.
 ```
 
-Blank lines separate numbered laws. See `book-components/README.txt` for the supported tags, including `<center>`, `<italic>`, `<bold>`, `<spacer height="0.25"/>`, `<pagebreak/>`, and the optional definitions section format.
+Blank lines separate numbered laws. See `book-components/README.txt` for the supported tags, including `<center>`, `<italic>`, `<bold>`, `<spacer height="0.25"/>`, `<pagebreak/>`, and the optional definitions and preface section formats.
 
 ## Fastest run
 
