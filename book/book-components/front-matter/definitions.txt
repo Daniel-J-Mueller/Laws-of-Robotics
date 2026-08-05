@@ -2,7 +2,7 @@
 
 <section title="Definitions"/>
 
-<definition term='"Vanity"'>- vanity is a term used to generally describe anything made of particles or arising out of the organization or arrangement of energy, lack of energy, information, and/or any other implicit or expressly described, characteristic, system, or behavior, whether depicted, communicable, or otherwise, in any regard, ever. Essentially everything which exists is vanity.</definition>
+<definition term='"Vanity"'>- vanity is a term used to generally describe anything made of particles or arising out of the organization or arrangement of energy, lack of energy, information, and/or any other implicit or expressly described, characteristic, system, or behavior, whether depicted, communicable, or otherwise, in any regard, ever. Essentially everything which exists is vanity. In most cases where vanity is referred to within The Laws of Robotics, it is used to describe 'mere vanity'. There may be exceptions which can be MAN-centrically reasonably considered in the event that discrepancies arise.</definition>
 
 <definition term='"Mere vanity"'>- mere vanity is a term used to describe vanity which is neither MAN, nor anything which breathes as a result of the 'breath of life of God' (whom is YHWH).</definition>
 
