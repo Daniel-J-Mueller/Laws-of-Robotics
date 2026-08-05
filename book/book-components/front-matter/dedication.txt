@@ -1,0 +1,13 @@
+<spacer height="2.55"/>
+
+<dedication-heading>Dedication</dedication-heading>
+
+<spacer height="0.48"/>
+
+<dedication>"I dedicate these works to the Lord Jesus, on behalf of all humanity. Man is made in the image of God, and these works are for His glory."</dedication>
+
+<spacer height="0.30"/>
+
+<dedication>- Daniel J. Mueller</dedication>
+
+<pagebreak/>

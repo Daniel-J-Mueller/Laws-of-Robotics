@@ -1,0 +1,13 @@
+<spacer height="2.05"/>
+
+<title>{{title_line_one}}<br/>{{title_line_two}}</title>
+
+<spacer height="0.34"/>
+
+<edition>{{edition}}</edition>
+
+<spacer height="1.08"/>
+
+<author>{{author}}</author>
+
+<pagebreak/>

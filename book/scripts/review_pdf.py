@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 SKILL_ROOT = Path("/home/oai/skills/pdfs/scripts")
+SCRIPT_DIR = Path(__file__).resolve().parent
+BOOK_DIR = SCRIPT_DIR.parent
 
 
 def run(cmd: list[str]) -> None:
@@ -18,7 +20,7 @@ def run(cmd: list[str]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("pdf", type=Path)
-    parser.add_argument("--out-dir", type=Path, default=Path("review_render"))
+    parser.add_argument("--out-dir", type=Path, default=BOOK_DIR / "review" / "review_render")
     parser.add_argument("--dpi", type=int, default=160)
     args = parser.parse_args()
 

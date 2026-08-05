@@ -17,6 +17,7 @@ import os
 import re
 import sys
 import urllib.request
+from dataclasses import dataclass
 from pathlib import Path
 
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
@@ -29,6 +30,7 @@ from reportlab.platypus import (
     BaseDocTemplate, Frame, KeepTogether, NextPageTemplate,
     PageBreak, PageTemplate, Paragraph, Spacer
 )
+from reportlab.platypus.doctemplate import ActionFlowable
 
 TITLE = "The Laws of Robotics of Daniel Joseph Mueller"
 TITLE_LINE_ONE = "The Laws of Robotics"
@@ -45,11 +47,38 @@ SOURCE_URL = (
     "Laws-of-Robotics/main/Laws-of-Robotics.txt"
 )
 PAGE_W, PAGE_H = 7 * inch, 10 * inch
+SCRIPT_DIR = Path(__file__).resolve().parent
+BOOK_DIR = SCRIPT_DIR.parent
+DEFAULT_SOURCE = BOOK_DIR / "Laws-of-Robotics.txt"
+DEFAULT_COMPONENTS_DIR = BOOK_DIR / "book-components"
 
 FONT_DIRS = [
     Path("/usr/share/fonts/truetype/liberation2"),
     Path("/usr/share/fonts/truetype/liberation"),
+    Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts",
 ]
+FONT_NAMES = {
+    "regular": "LiberationSerif",
+    "bold": "LiberationSerif-Bold",
+    "italic": "LiberationSerif-Italic",
+    "bold_italic": "LiberationSerif-BoldItalic",
+}
+
+
+@dataclass
+class BookMetadata:
+    title: str = TITLE
+    title_line_one: str = TITLE_LINE_ONE
+    title_line_two: str = TITLE_LINE_TWO
+    edition: str = EDITION
+    author: str = AUTHOR
+    copyright_year: str = COPYRIGHT_YEAR
+
+
+@dataclass
+class Chapter:
+    title: str | None
+    laws: list[str]
 
 
 def locate_font(filename: str) -> Path:
@@ -61,10 +90,21 @@ def locate_font(filename: str) -> Path:
 
 
 def register_fonts() -> None:
-    pdfmetrics.registerFont(TTFont("LiberationSerif", str(locate_font("LiberationSerif-Regular.ttf"))))
-    pdfmetrics.registerFont(TTFont("LiberationSerif-Bold", str(locate_font("LiberationSerif-Bold.ttf"))))
-    pdfmetrics.registerFont(TTFont("LiberationSerif-Italic", str(locate_font("LiberationSerif-Italic.ttf"))))
-    pdfmetrics.registerFont(TTFont("LiberationSerif-BoldItalic", str(locate_font("LiberationSerif-BoldItalic.ttf"))))
+    try:
+        pdfmetrics.registerFont(TTFont("LiberationSerif", str(locate_font("LiberationSerif-Regular.ttf"))))
+        pdfmetrics.registerFont(TTFont("LiberationSerif-Bold", str(locate_font("LiberationSerif-Bold.ttf"))))
+        pdfmetrics.registerFont(TTFont("LiberationSerif-Italic", str(locate_font("LiberationSerif-Italic.ttf"))))
+        pdfmetrics.registerFont(TTFont("LiberationSerif-BoldItalic", str(locate_font("LiberationSerif-BoldItalic.ttf"))))
+    except FileNotFoundError:
+        # ReportLab includes Times on every install. Keep the style names dynamic so
+        # local Windows builds can still render even when Liberation Serif is absent.
+        FONT_NAMES.update({
+            "regular": "Times-Roman",
+            "bold": "Times-Bold",
+            "italic": "Times-Italic",
+            "bold_italic": "Times-BoldItalic",
+        })
+        return
     pdfmetrics.registerFontFamily(
         "LiberationSerif",
         normal="LiberationSerif",
@@ -86,7 +126,17 @@ def load_source(path: Path) -> str:
     return data.decode("utf-8-sig")
 
 
+def remove_author_note_lines(text: str) -> str:
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    # Lines beginning with !!! are author notes, not book text.
+    return "\n".join(
+        line for line in normalized.split("\n")
+        if not line.lstrip().startswith("!!!")
+    )
+
+
 def parse_laws(text: str) -> list[str]:
+    text = remove_author_note_lines(text)
     text = text.replace("\r\n", "\n").replace("\r", "\n").strip()
     # The repository uses blank lines as the stable boundary between laws.
     laws = [re.sub(r"[ \t]+", " ", block.replace("\n", " ")).strip()
@@ -98,9 +148,245 @@ def esc(text: str) -> str:
     return html.escape(text, quote=False).replace("\u00a0", " ")
 
 
+def font(kind: str) -> str:
+    return FONT_NAMES[kind]
+
+
+ATTR_RE = re.compile(r"""([A-Za-z_][\w-]*)\s*=\s*(['"])(.*?)\2""")
+BLOCK_TAG_RE = re.compile(r"^<([A-Za-z][\w-]*)([^>]*)>(.*)</\1>$", re.DOTALL)
+SELF_TAG_RE = re.compile(r"^<([A-Za-z][\w-]*)([^>]*)/>$", re.DOTALL)
+INLINE_TAG_RE = re.compile(
+    r"(<\/?(?:italic|bold|term)>|<(?:linebreak|br)\s*/>)",
+    re.IGNORECASE,
+)
+METADATA_TOKEN_RE = re.compile(r"\{\{([A-Za-z_][\w-]*)\}\}")
+INLINE_TAGS = {
+    "<italic>": "<i>",
+    "</italic>": "</i>",
+    "<bold>": "<b>",
+    "</bold>": "</b>",
+    "<term>": "<b>",
+    "</term>": "</b>",
+    "<linebreak/>": "<br/>",
+    "<br/>": "<br/>",
+}
+COMPONENT_STYLE_TAGS = {
+    "half-title": "half_title",
+    "title": "title",
+    "edition": "edition",
+    "author": "author",
+    "copyright": "copyright",
+    "dedication-heading": "dedication_heading",
+    "dedication": "dedication",
+    "section-heading": "preface_heading",
+    "preface": "preface",
+    "paragraph": "front_left",
+    "center": "front_center",
+}
+
+
+def parse_attrs(raw_attrs: str) -> dict[str, str]:
+    return {key: value for key, _, value in ATTR_RE.findall(raw_attrs)}
+
+
+def strip_component_comments(text: str) -> str:
+    return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+
+
+def split_component_blocks(text: str) -> list[str]:
+    text = strip_component_comments(text)
+    text = text.replace("\r\n", "\n").replace("\r", "\n").strip()
+    if not text:
+        return []
+    return [block.strip() for block in re.split(r"\n\s*\n+", text) if block.strip()]
+
+
+def first_component_block(text: str) -> str | None:
+    blocks = split_component_blocks(text)
+    return blocks[0].strip().lower() if blocks else None
+
+
+def normalize_paragraph_text(text: str) -> str:
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    return re.sub(r"[ \t]+", " ", text.replace("\n", " ")).strip()
+
+
+def component_markup(text: str) -> str:
+    text = normalize_paragraph_text(text)
+    pieces = []
+    for piece in INLINE_TAG_RE.split(text):
+        if not piece:
+            continue
+        tag = re.sub(r"\s+", "", piece.lower())
+        if tag in INLINE_TAGS:
+            pieces.append(INLINE_TAGS[tag])
+        else:
+            pieces.append(esc(piece))
+    return "".join(pieces)
+
+
+def expand_includes(text: str, components_dir: Path) -> str:
+    lines = []
+    for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+        match = SELF_TAG_RE.match(line.strip())
+        if match and match.group(1).lower() == "include":
+            attrs = parse_attrs(match.group(2))
+            if "path" not in attrs:
+                raise ValueError("<include/> requires a path attribute.")
+            include_path = (components_dir / attrs["path"]).resolve()
+            if not include_path.exists() and include_path.name == "Laws-of-Robotics.txt":
+                load_source(include_path)
+            if not include_path.exists():
+                raise FileNotFoundError(include_path)
+            lines.append(include_path.read_text(encoding="utf-8-sig"))
+        else:
+            lines.append(line)
+    return "\n".join(lines)
+
+
+def load_metadata(components_dir: Path) -> BookMetadata:
+    metadata = BookMetadata()
+    path = components_dir / "metadata.txt"
+    if not path.exists():
+        return metadata
+    values = metadata.__dict__.copy()
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if ":" not in stripped:
+            raise ValueError(f"Metadata line must use 'key: value': {line}")
+        key, value = stripped.split(":", 1)
+        key = key.strip().replace("-", "_")
+        if key not in values:
+            raise ValueError(f"Unknown metadata key: {key}")
+        values[key] = value.strip()
+    return BookMetadata(**values)
+
+
+def apply_metadata_tokens(text: str, metadata: BookMetadata) -> str:
+    values = metadata.__dict__
+
+    def replace(match: re.Match) -> str:
+        key = match.group(1)
+        if key not in values:
+            raise ValueError(f"Unknown metadata token: {{{{{key}}}}}")
+        return values[key]
+
+    return METADATA_TOKEN_RE.sub(replace, text)
+
+
+def title_from_filename(path: Path) -> str:
+    title = re.sub(r"^\d+[-_\s]*", "", path.stem)
+    title = title.replace("-", " ").replace("_", " ").strip()
+    return title.title() if title else path.stem
+
+
+def load_chapter(path: Path, components_dir: Path) -> Chapter | None:
+    text = path.read_text(encoding="utf-8-sig")
+    if first_component_block(text) == "<skip/>":
+        return None
+    text = expand_includes(text, components_dir)
+    body_lines = []
+    title = None
+    for line in text.splitlines():
+        stripped = line.strip()
+        match = SELF_TAG_RE.match(stripped)
+        if match and match.group(1).lower() == "chapter":
+            attrs = parse_attrs(match.group(2))
+            title = attrs.get("title", "").strip() or None
+            continue
+        body_lines.append(line)
+    laws = parse_laws("\n".join(body_lines))
+    if not laws:
+        return None
+    return Chapter(title=title or title_from_filename(path), laws=laws)
+
+
+def load_chapters(components_dir: Path) -> list[Chapter]:
+    chapters_dir = components_dir / "chapters"
+    if not chapters_dir.exists():
+        return []
+    chapters = []
+    for path in sorted(chapters_dir.glob("*.txt")):
+        chapter = load_chapter(path, components_dir)
+        if chapter is not None:
+            chapters.append(chapter)
+    return chapters
+
+
+def render_component_file(path: Path, style_map: dict[str, ParagraphStyle],
+                          metadata: BookMetadata,
+                          default_style: str = "front_left"):
+    if not path.exists():
+        return []
+    raw_text = path.read_text(encoding="utf-8-sig")
+    if first_component_block(raw_text) == "<skip/>":
+        return []
+    raw_text = apply_metadata_tokens(expand_includes(raw_text, path.parent.parent), metadata)
+    flowables = []
+    for block in split_component_blocks(raw_text):
+        lowered = block.lower()
+        if lowered == "<skip/>":
+            return []
+        self_match = SELF_TAG_RE.match(block)
+        if self_match:
+            tag = self_match.group(1).lower()
+            attrs = parse_attrs(self_match.group(2))
+            if tag == "spacer":
+                flowables.append(Spacer(1, float(attrs.get("height", "0")) * inch))
+            elif tag == "pagebreak":
+                flowables.append(PageBreak())
+            elif tag == "section":
+                title = attrs.get("title", "")
+                if title:
+                    flowables.append(Paragraph(component_markup(title), style_map["preface_heading"]))
+            else:
+                raise ValueError(f"Unsupported self-closing tag in {path}: <{tag}/>")
+            continue
+
+        block_match = BLOCK_TAG_RE.match(block)
+        if block_match:
+            tag = block_match.group(1).lower()
+            attrs = parse_attrs(block_match.group(2))
+            content = block_match.group(3)
+            if tag == "definition":
+                term = attrs.get("term", "").strip()
+                term_markup = f"<b>{esc(term)}</b> " if term else ""
+                flowables.append(Paragraph(term_markup + component_markup(content), style_map["definition"]))
+                continue
+            if tag == "italic":
+                content = f"<italic>{content}</italic>"
+                style_name = default_style
+            elif tag == "bold":
+                content = f"<bold>{content}</bold>"
+                style_name = default_style
+            elif tag in COMPONENT_STYLE_TAGS:
+                style_name = COMPONENT_STYLE_TAGS[tag]
+            else:
+                raise ValueError(f"Unsupported block tag in {path}: <{tag}>")
+            flowables.append(Paragraph(component_markup(content), style_map[style_name]))
+        else:
+            flowables.append(Paragraph(component_markup(block), style_map[default_style]))
+    return flowables
+
+
+class StartOnOddPage(ActionFlowable):
+    def __init__(self, template_name: str):
+        super().__init__(())
+        self.template_name = template_name
+
+    def apply(self, doc):
+        if doc.page % 2 == 1:
+            doc.handle_pageBreak()
+        doc.handle_nextPageTemplate(self.template_name)
+        doc.handle_pageBreak()
+
+
 class BookDocTemplate(BaseDocTemplate):
-    def __init__(self, filename: str, **kwargs):
+    def __init__(self, filename: str, metadata: BookMetadata, **kwargs):
         super().__init__(filename, **kwargs)
+        self.metadata = metadata
         self.body_page_number = 0
         self.in_body = False
 
@@ -136,8 +422,8 @@ def make_body_templates(doc: BookDocTemplate):
 
 def draw_front_page(canvas, doc):
     canvas.saveState()
-    canvas.setTitle(f"{TITLE} - {EDITION}")
-    canvas.setAuthor(AUTHOR)
+    canvas.setTitle(f"{doc.metadata.title} - {doc.metadata.edition}")
+    canvas.setAuthor(doc.metadata.author)
     canvas.setSubject("Barnes & Noble Press interior")
     canvas.restoreState()
 
@@ -147,7 +433,7 @@ def draw_body_page(canvas, doc: BookDocTemplate):
     doc.body_page_number += 1
     n = doc.body_page_number
     canvas.saveState()
-    canvas.setFont("LiberationSerif", 8)
+    canvas.setFont(font("regular"), 8)
     y = 0.39 * inch
     canvas.drawCentredString(PAGE_W / 2, y, str(n))
     canvas.restoreState()
@@ -155,26 +441,41 @@ def draw_body_page(canvas, doc: BookDocTemplate):
 
 def styles():
     return {
-        "half_title": ParagraphStyle("half_title", fontName="LiberationSerif-Bold", fontSize=20,
+        "half_title": ParagraphStyle("half_title", fontName=font("bold"), fontSize=20,
                                      leading=24, alignment=TA_CENTER, spaceAfter=0),
-        "title": ParagraphStyle("title", fontName="LiberationSerif-Bold", fontSize=24,
+        "title": ParagraphStyle("title", fontName=font("bold"), fontSize=24,
                                 leading=28, alignment=TA_CENTER),
-        "edition": ParagraphStyle("edition", fontName="LiberationSerif", fontSize=13,
+        "edition": ParagraphStyle("edition", fontName=font("regular"), fontSize=13,
                                   leading=16, alignment=TA_CENTER),
-        "author": ParagraphStyle("author", fontName="LiberationSerif", fontSize=14,
+        "author": ParagraphStyle("author", fontName=font("regular"), fontSize=14,
                                  leading=18, alignment=TA_CENTER),
-        "copyright": ParagraphStyle("copyright", fontName="LiberationSerif", fontSize=9.5,
+        "copyright": ParagraphStyle("copyright", fontName=font("regular"), fontSize=9.5,
                                     leading=13, alignment=TA_LEFT),
-        "dedication_heading": ParagraphStyle("dedication_heading", fontName="LiberationSerif-Bold",
+        "dedication_heading": ParagraphStyle("dedication_heading", fontName=font("bold"),
                                              fontSize=14, leading=18, alignment=TA_CENTER),
-        "dedication": ParagraphStyle("dedication", fontName="LiberationSerif-Italic", fontSize=12,
+        "dedication": ParagraphStyle("dedication", fontName=font("italic"), fontSize=12,
                                      leading=18, alignment=TA_CENTER),
-        "section": ParagraphStyle("section", fontName="LiberationSerif-Bold", fontSize=10.5,
+        "section": ParagraphStyle("section", fontName=font("bold"), fontSize=10.5,
                       leading=13, alignment=TA_CENTER),
-        "law": ParagraphStyle("law", fontName="LiberationSerif", fontSize=9.8,
+        "law": ParagraphStyle("law", fontName=font("regular"), fontSize=9.8,
                       leading=13.1, alignment=TA_JUSTIFY, firstLineIndent=0,
                       spaceAfter=6.5, allowWidows=0, allowOrphans=0,
                               splitLongWords=False),
+        "chapter_heading": ParagraphStyle("chapter_heading", fontName=font("bold"), fontSize=15,
+                                          leading=19, alignment=TA_CENTER, spaceAfter=0),
+        "preface_heading": ParagraphStyle("preface_heading", fontName=font("bold"), fontSize=15,
+                                          leading=19, alignment=TA_CENTER, spaceAfter=18),
+        "preface": ParagraphStyle("preface", fontName=font("regular"), fontSize=10.5,
+                                  leading=15, alignment=TA_JUSTIFY, spaceAfter=7,
+                                  splitLongWords=False),
+        "definition": ParagraphStyle("definition", fontName=font("regular"), fontSize=10.5,
+                                     leading=15, alignment=TA_LEFT, leftIndent=0.18*inch,
+                                     firstLineIndent=-0.18*inch, spaceAfter=7,
+                                     splitLongWords=False),
+        "front_left": ParagraphStyle("front_left", fontName=font("regular"), fontSize=10.5,
+                                     leading=14, alignment=TA_LEFT, spaceAfter=7),
+        "front_center": ParagraphStyle("front_center", fontName=font("regular"), fontSize=10.5,
+                                       leading=14, alignment=TA_CENTER, spaceAfter=7),
     }
 
 
@@ -207,7 +508,7 @@ def build_story(laws: list[str]):
 
     total = len(laws)
     for i, law in enumerate(laws, start=1):
-        law_markup = f'<font name="LiberationSerif-Bold">{i}.</font>&nbsp;&nbsp;{esc(law)}'
+        law_markup = f'<font name="{font("bold")}">{i}.</font>&nbsp;&nbsp;{esc(law)}'
         law_paragraph = Paragraph(law_markup, s["law"])
         if (i - 1) % 100 == 0:
             last = min(i + 99, total)
@@ -221,33 +522,114 @@ def build_story(laws: list[str]):
     return story
 
 
-def build_pdf(source: Path, output: Path) -> tuple[int, int]:
+def add_chapter_laws(story: list, chapter: Chapter, style_map: dict[str, ParagraphStyle],
+                     first_law_number: int, total_laws: int) -> int:
+    if chapter.title:
+        story.extend([
+            Spacer(1, 0.48 * inch),
+            Paragraph(component_markup(chapter.title), style_map["chapter_heading"]),
+            Spacer(1, 0.25 * inch),
+        ])
+
+    law_number = first_law_number
+    for law in chapter.laws:
+        law_markup = (
+            f'<font name="{font("bold")}">{law_number}.</font>'
+            f'&nbsp;&nbsp;{component_markup(law)}'
+        )
+        law_paragraph = Paragraph(law_markup, style_map["law"])
+        if (law_number - 1) % 100 == 0:
+            last = min(law_number + 99, total_laws)
+            section = [
+                Paragraph(f"Laws {law_number}-{last}", style_map["section"]),
+                Spacer(1, 0.14 * inch),
+                law_paragraph,
+            ]
+            if law_number != 1:
+                section.insert(0, Spacer(1, 0.16 * inch))
+            story.append(KeepTogether(section))
+        else:
+            story.append(law_paragraph)
+        law_number += 1
+    return law_number
+
+
+def build_component_story(components_dir: Path, source: Path) -> tuple[list, int, BookMetadata]:
+    metadata = load_metadata(components_dir)
+    style_map = styles()
+    front_matter = [
+        components_dir / "front-matter" / "half-title.txt",
+        components_dir / "front-matter" / "title-page.txt",
+        components_dir / "front-matter" / "copyright.txt",
+        components_dir / "front-matter" / "dedication.txt",
+    ]
+
+    story = []
+    for path in front_matter:
+        story.extend(render_component_file(path, style_map, metadata))
+
+    definitions = render_component_file(
+        components_dir / "front-matter" / "definitions.txt",
+        style_map,
+        metadata,
+        default_style="preface",
+    )
+    if definitions:
+        story.append(StartOnOddPage("Front"))
+        story.extend(definitions)
+
+    chapters = load_chapters(components_dir)
+    if not chapters:
+        chapters = [Chapter(title=None, laws=parse_laws(load_source(source)))]
+    total_laws = sum(len(chapter.laws) for chapter in chapters)
+    if total_laws == 0:
+        raise RuntimeError("No laws were found in the component chapters.")
+
+    story.append(StartOnOddPage("BodyOdd"))
+    next_law_number = 1
+    for index, chapter in enumerate(chapters):
+        if index > 0:
+            story.append(StartOnOddPage("BodyOdd"))
+        next_law_number = add_chapter_laws(
+            story, chapter, style_map, next_law_number, total_laws
+        )
+    return story, total_laws, metadata
+
+
+def build_pdf(source: Path, output: Path, components: Path | None = DEFAULT_COMPONENTS_DIR) -> tuple[int, int]:
     register_fonts()
-    text = load_source(source)
-    laws = parse_laws(text)
-    if not laws:
-        raise RuntimeError("No laws were found in the source file.")
+    metadata = BookMetadata()
+    if components is not None and components.exists():
+        story, law_count, metadata = build_component_story(components, source)
+    else:
+        text = load_source(source)
+        laws = parse_laws(text)
+        if not laws:
+            raise RuntimeError("No laws were found in the source file.")
+        story = build_story(laws)
+        law_count = len(laws)
     output.parent.mkdir(parents=True, exist_ok=True)
     doc = BookDocTemplate(
-        str(output), pagesize=(PAGE_W, PAGE_H),
+        str(output), metadata=metadata, pagesize=(PAGE_W, PAGE_H),
         leftMargin=0, rightMargin=0, topMargin=0, bottomMargin=0,
-        title=f"{TITLE} - {EDITION}", author=AUTHOR,
+        title=f"{metadata.title} - {metadata.edition}", author=metadata.author,
         subject="Barnes & Noble Press print interior",
         pageCompression=1,
     )
     doc.addPageTemplates(make_body_templates(doc))
-    story = build_story(laws)
     doc.build(story)
-    return len(laws), doc.page
+    return law_count, doc.page
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source", type=Path, default=Path("Laws-of-Robotics.txt"))
+    parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
+    parser.add_argument("--components", type=Path, default=DEFAULT_COMPONENTS_DIR,
+                        help="Directory of editable book component .txt files.")
     parser.add_argument("--output", type=Path,
-                        default=Path("The_Laws_of_Robotics_of_Daniel_Joseph_Mueller_First_Edition_Interior.pdf"))
+                        default=BOOK_DIR / "The_Laws_of_Robotics_of_Daniel_Joseph_Mueller_First_Edition_Interior.pdf")
     args = parser.parse_args()
-    laws, pages = build_pdf(args.source, args.output)
+    laws, pages = build_pdf(args.source, args.output, args.components)
     print(f"Created: {args.output}")
     print(f"Laws: {laws}")
     print(f"Pages: {pages}")

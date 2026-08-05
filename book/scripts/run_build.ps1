@@ -1,4 +1,4 @@
 $ErrorActionPreference = "Stop"
-Set-Location $PSScriptRoot
+Set-Location (Resolve-Path (Join-Path $PSScriptRoot ".."))
 python -m pip install -r requirements.txt
-python build_and_review.py
+python book-assembler.py

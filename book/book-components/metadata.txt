@@ -1,0 +1,6 @@
+title: The Laws of Robotics of Daniel Joseph Mueller
+title_line_one: The Laws of Robotics
+title_line_two: of Daniel Joseph Mueller
+edition: First Edition
+author: Daniel J. Mueller
+copyright_year: 2026
